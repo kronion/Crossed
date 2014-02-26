@@ -5,6 +5,7 @@ var y;
 var minutes;
 var seconds;
 var interval;
+var redraw;
 
 /* Handle arrow keys */
 window.onkeydown = function (e) {
@@ -28,6 +29,12 @@ window.onkeydown = function (e) {
     y += 1;
     __highlight();
   }
+  else if (64 < e.which && e.which < 91 || e.which == 32) {
+    __unhighlight();
+    __insertChar(String.fromCharCode(e.which));
+    __highlight();
+  }
+
 }
 
 /* Creates a new game board (should only be called once) */
@@ -60,6 +67,7 @@ function start () {
   __highlight();
   $('#start').hide();
   $('form[name="character"]').show();
+  $('#hint').show();
   $('#restart').show();
 }
 
@@ -107,14 +115,49 @@ function checkComplete() {
 }
 
 function hint() {
-  for (var i = 0; i < test.length; i++) {
-    for (var j = 0; j < test[i].length; j++) {
-      
+  clearTimeout(redraw);
+  for (var i = 0; i < solution.length; i++) {
+    for (var j = 0; j < solution[i].length; j++) {
+      if (__legalSpace(i,j) && !__checkSpace(i,j)) {
+        $('#td' + i + j).css({ "background-color" : "#f48d8d" });
+      }
+      else if (__legalSpace(i,j) && __checkSpace(i,j)) {
+        $('#td' + i + j).css({ "background-color" : "#fff" });
+      }
     }
+    if (solution[i].length < test[i].length) {
+      for (var j = solution[i].length; j < test[i].length; j++) {
+        if (__legalSpace(i,j)) {
+          $('#td' + i + j).css({ "background-color" : "#f48d8d" });
+        }
+      }
+    }
+  }
+  if (solution.length < test.length) {
+    for (var i = solution.length; i < test.length; i++) {
+      for (var j = 0; j < test[i].length; j++) {
+        if (__legalSpace(i,j)) {
+          $('#td' + i + j).css({ "background-color" : "#f48d8d" });
+        }
+      }
+    }
+  }
+  redraw = setTimeout(function () {
+    for (var i = 0; i < test.length; i++) {
+      for (var j = 0; j < test[i].length; j++) {
+        if (__legalSpace(i,j)) {
+          $('#td' + i + j).css({ "background-color" : "#fff" });
+        }
+      }
+    }
+    __highlight();
+  }, 3000);
 }
 
-function __insertChar() {
-  var character = $('#characterInput').val();
+function __insertChar(character) {
+  if (character == undefined) {
+    character = $('#characterInput').val();
+  }
   if (character === " " || isNaN(character)) {
     $('#' + y + x).text($('#' + y + x).text().replace(/./g, ''));
     $('#' + y + x).append(character);
@@ -131,7 +174,14 @@ function __insertChar() {
 }
 
 function __unhighlight() {
-  $("#td" + y + x).css({ "background-color": "#fff" });
+  clearTimeout(redraw);
+  for (var i = 0; i < test.length; i++) {
+    for (var j = 0; j < test[i].length; j++) {
+      if (__legalSpace(i,j)) {
+        $("#td" + i + j).css({ "background-color": "#fff" });
+      }
+    }
+  }
 }
 
 function __highlight() {
@@ -161,7 +211,7 @@ function __updateTime() {
 }
 
 function __checkSpace(i, j) {
-  if (test[i][j] === solution[i][j]) {
+  if (solution[i][j] && test[i][j].toUpperCase() === solution[i][j].toUpperCase()) {
     return true;
   }
   return false;

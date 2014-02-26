@@ -42,6 +42,10 @@ form {
   height: 1em;
 }
 
+#hint {
+  display: none;
+}
+
 #restart {
   margin-top: 50px;
   display: none;
