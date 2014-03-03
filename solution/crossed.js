@@ -7,8 +7,34 @@ var seconds;
 var interval;
 var redraw;
 
-/* Handle keypresses */
+/* Handle arrow keys */
 window.onkeydown = function (e) {
+  if (e.which == 37 && __legalSpace(y, x-1)) {
+    __unhighlight();
+    x -= 1;
+    __highlight();
+  }
+  else if (e.which == 38 && __legalSpace(y-1, x)) {
+    __unhighlight();
+    y -= 1;
+    __highlight();
+  }
+  else if (e.which == 39 && __legalSpace(y, x+1)) {
+    __unhighlight();
+    x += 1;
+    __highlight();
+  }
+  else if (e.which == 40 && __legalSpace(y+1, x)) {
+    __unhighlight();
+    y += 1;
+    __highlight();
+  }
+  else if ((64 < e.which && e.which < 91 || e.which == 32) && !checkComplete()) {
+    __unhighlight();
+    __insertChar(String.fromCharCode(e.which));
+    __highlight();
+  }
+
 }
 
 /* Creates a new game board (should only be called once) */
@@ -46,10 +72,24 @@ function start () {
 
 /* Clears all cells of the game board */
 function restart() {
+  for (var i = 0; i < test.length; i++) {
+    for (var j = 0; j < test[i].length; j++) {
+      $('#' + i + j).text($('#' + i + j).text().replace(/./g, ''));
+      if (solution[i][j] !== '-') {
+        solution[i][j] = '';
+      }
+    }
+  }
+  __unhighlight();
+  x = 0;
+  y = 0;
+  __highlight();
 
-  // Look at other functions for hints on how to get started
+  clearInterval(interval);
+  minutes = 0;
+  seconds = 0;
+  timer();
 
-  // This is just to get you going
   $('input').each(function () {
     $(this).removeAttr('disabled');
   });
@@ -76,19 +116,16 @@ function hint() {
   clearTimeout(redraw);
   for (var i = 0; i < solution.length; i++) {
     for (var j = 0; j < solution[i].length; j++) {
-      // fix this
-      if (false) {
+      if (__legalSpace(i,j) && !__checkSpace(i,j)) {
         $('#td' + i + j).css({ "background-color" : "#f48d8d" });
       }
-      // and this
-      else if (true) {
+      else if (__legalSpace(i,j) && __checkSpace(i,j)) {
         $('#td' + i + j).css({ "background-color" : "#fff" });
       }
     }
     if (solution[i].length < test[i].length) {
       for (var j = solution[i].length; j < test[i].length; j++) {
-        // and this
-        if (false) {
+        if (__legalSpace(i,j)) {
           $('#td' + i + j).css({ "background-color" : "#f48d8d" });
         }
       }
@@ -97,8 +134,7 @@ function hint() {
   if (solution.length < test.length) {
     for (var i = solution.length; i < test.length; i++) {
       for (var j = 0; j < test[i].length; j++) {
-        // and this
-        if (false) {
+        if (__legalSpace(i,j)) {
           $('#td' + i + j).css({ "background-color" : "#f48d8d" });
         }
       }
@@ -107,8 +143,7 @@ function hint() {
   redraw = setTimeout(function () {
     for (var i = 0; i < test.length; i++) {
       for (var j = 0; j < test[i].length; j++) {
-        // and this
-        if (true) {
+        if (__legalSpace(i,j)) {
           $('#td' + i + j).css({ "background-color" : "#fff" });
         }
       }
@@ -118,20 +153,21 @@ function hint() {
 }
 
 function timer() {
-
+  $('#time').text(minutes + ':' + ('0' + seconds).slice(-2));
+  interval = setInterval(__updateTime, 1000);
 }
 
-function insertChar(character) {
+function __insertChar(character) {
   if (character == undefined) {
     character = $('#characterInput').val();
   }
   if (character === " " || isNaN(character)) {
     $('#' + y + x).text($('#' + y + x).text().replace(/./g, ''));
+    $('#' + y + x).append(character);
     $('#characterInput').val('');
-
-    // Two lines here should do it
-
+    solution[y][x] = character;
     if (checkComplete()) {
+      clearInterval(interval);
       $('input').each(function () {
         $(this).attr('disabled', 'true');
       });
